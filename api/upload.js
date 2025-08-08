@@ -1,11 +1,13 @@
-const { Octokit } = require('@octokit/rest');
+// api/upload.js (部署到Vercel/Netlify/AWS Lambda等)
+// 注意：这里将 require 替换为动态 import
+// const { Octokit } = require('@octokit/rest'); // <-- 移除或注释这行
 
 module.exports = async (req, res) => {
   // CORS 头部：允许来自您的前端域名或其他来源的请求
   // 生产环境中，建议将 '*' 替换为您的前端域名，例如 'https://yaojiwei520.github.io'
   res.setHeader('Access-Control-Allow-Origin', '*'); 
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With'); // Add common headers
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With');
 
   // 处理 OPTIONS 预检请求 by Vercel/Netlify's default behavior
   if (req.method === 'OPTIONS') {
@@ -13,6 +15,9 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // 动态导入 Octokit。因为 module.exports 是一个 async 函数，所以这里可以使用 await
+    const { Octokit } = await import('@octokit/rest');
+
     // 验证请求
     if (!req.body || !req.body.image || !req.body.type) {
       return res.status(400).json({ error: 'Missing image data or type. Please provide Base64 image and its MIME type.' });
@@ -41,7 +46,7 @@ module.exports = async (req, res) => {
     let ext = mimeType.split('/')[1] || 'png';
     if (ext === 'jpeg') ext = 'jpg'; // 统一使用 .jpg
 
-    // 生成唯一文件名，与前端约定保持一致性（或者由后端完全控制）
+    // 生成唯一文件名
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substr(2, 6);
     const filename = `images/${timestamp}_${randomSuffix}.${ext}`;
