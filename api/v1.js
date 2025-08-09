@@ -1,6 +1,7 @@
 // api/v1.js (Serverless API Endpoint for multipart/form-data)
 // 注意：此文件名为 'v1.js'，Vercel 将其映射到 /api/v1
 
+// 所有依赖都使用 ES Module 语法导入
 import { Octokit } from '@octokit/rest'; 
 import formidable from 'formidable'; 
 import fs from 'fs/promises'; 
@@ -9,13 +10,14 @@ import fs from 'fs/promises';
 const form = formidable({
     multiples: false, 
     keepExtensions: true, 
-    maxFileSize: 5 * 1024 * 1024, // 5MB，与前端保持一致
+    maxFileSize: 5 * 1024 * 1024, 
 });
 
-// 定义代理前缀，这是后端 API 输出的统一前缀
+// 定义代理前缀
 const PROXY_PREFIX = 'https://gh.catmak.name/'; 
 
 // Vercel Serverless Function 的入口点
+// 使用 export default 语法，符合 ESM 规范
 export default async function handler(req, res) {
   // CORS 头部
   res.setHeader('Access-Control-Allow-Origin', '*'); 
@@ -120,22 +122,22 @@ export default async function handler(req, res) {
     });
     console.log(`[API DEBUG] GitHub upload successful for ${filename}. SHA: ${uploadResult.data.content.sha}`);
 
-    // *** 核心修改：在后端这里直接拼接 PROXY_PREFIX ***
+    // 在后端这里直接拼接 PROXY_PREFIX
     const originalGithubPagesCdnUrl = `https://${owner}.github.io/${githubPath}`; 
     const originalGithubBlobUrl = `https://github.com/${owner}/${repo}/blob/main/${githubPath}`;
 
-    const proxiedGithubPagesCdnUrl = PROXY_PREFIX + originalGithubPagesCdnUrl; // 代理后的 CDN 链接
-    const proxiedGithubBlobUrl = PROXY_PREFIX + originalGithubBlobUrl; // 代理后的 Blob 链接
+    const proxiedGithubPagesCdnUrl = PROXY_PREFIX + originalGithubPagesCdnUrl; 
+    const proxiedGithubBlobUrl = PROXY_PREFIX + originalGithubBlobUrl; 
 
     console.log(`[API SUCCESS] Final CDN URL (Proxied): ${proxiedGithubPagesCdnUrl}`);
     console.log(`[API SUCCESS] Final Blob URL (Proxied): ${proxiedGithubBlobUrl}`);
     
     res.status(200).json({
       success: true,
-      url: proxiedGithubPagesCdnUrl, // API spec 中的 'url' 字段，现在是代理后的 CDN 链接
-      delete_url: "https://api.yourdomain.com/delete?id=NotImplementedYet", // 占位符
+      url: proxiedGithubPagesCdnUrl, 
+      delete_url: "https://api.yourdomain.com/delete?id=NotImplementedYet", 
       message: "图片上传成功！",
-      blobUrlForInternalUse: proxiedGithubBlobUrl // 额外返回的代理后的 Blob 链接
+      blobUrlForInternalUse: proxiedGithubBlobUrl 
     });
     
   } catch (error) {
@@ -157,6 +159,7 @@ export default async function handler(req, res) {
   }
 }
 
+// 导出配置，确保Vercel知道处理的是multipart/form-data
 export const config = {
     api: {
         bodyParser: false, 
