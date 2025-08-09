@@ -3,12 +3,13 @@
 
 import { Octokit } from '@octokit/rest'; 
 import fs from 'fs/promises'; 
+import { createRequire } from 'module'; // 导入 Node.js 内置的 createRequire 函数
 
-// *** 核心修改：使用 createRequire 来导入 formidable ***
-// 这是在 ES Module (v1.mjs) 文件中安全导入 CommonJS 模块 (formidable) 的最可靠方式
-import { createRequire } from 'module'; 
+// *** 核心修改：使用 createRequire 导入 formidable 并尝试获取其主函数 ***
 const require = createRequire(import.meta.url); 
-const formidable = require('formidable'); // <-- 务必使用这个导入方式
+const formidableModule = require('formidable');
+const formidable = formidableModule.default || formidableModule; // <-- 最终尝试这种导入方式
+
 
 // 配置 formidable
 const form = formidable({ // formidable现在应该作为一个函数被正确引用
