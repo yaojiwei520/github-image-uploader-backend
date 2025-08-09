@@ -1,17 +1,17 @@
 // api/v1.mjs (Serverless API Endpoint for multipart/form-data)
-// 注意：此文件名为 'v1.mjs'，Vercel 将其映射到 /api/v1
 // 这是一个 ES Module 文件
 
 import { Octokit } from '@octokit/rest'; 
 import fs from 'fs/promises'; 
 
 // *** 核心修改：使用 createRequire 来导入 formidable ***
-import { createRequire } from 'module'; // 导入 Node.js 内置的 createRequire 函数
-const require = createRequire(import.meta.url); // 创建一个 require 函数
-const formidable = require('formidable'); // 使用创建的 require 函数来导入 formidable
+// 这是在 ES Module (v1.mjs) 文件中安全导入 CommonJS 模块 (formidable) 的最可靠方式
+import { createRequire } from 'module'; 
+const require = createRequire(import.meta.url); 
+const formidable = require('formidable'); // <-- 务必使用这个导入方式
 
 // 配置 formidable
-const form = formidable({
+const form = formidable({ // formidable现在应该作为一个函数被正确引用
     multiples: false, 
     keepExtensions: true, 
     maxFileSize: 5 * 1024 * 1024, 
