@@ -1,10 +1,14 @@
 // api/v1.mjs (Serverless API Endpoint for multipart/form-data)
 // 注意：此文件名为 'v1.mjs'，Vercel 将其映射到 /api/v1
-// 这是一个 ES Module 文件，可以同时导入 ESM 和 CommonJS 模块
+// 这是一个 ES Module 文件
 
 import { Octokit } from '@octokit/rest'; 
-import formidable from 'formidable'; // 这一行现在可以正常工作
 import fs from 'fs/promises'; 
+
+// *** 核心修改：使用 createRequire 来导入 formidable ***
+import { createRequire } from 'module'; // 导入 Node.js 内置的 createRequire 函数
+const require = createRequire(import.meta.url); // 创建一个 require 函数
+const formidable = require('formidable'); // 使用创建的 require 函数来导入 formidable
 
 // 配置 formidable
 const form = formidable({
@@ -17,7 +21,6 @@ const form = formidable({
 const PROXY_PREFIX = 'https://gh.catmak.name/'; 
 
 // Vercel Serverless Function 的入口点
-// 使用 export default 语法，符合 ESM 规范
 export default async function handler(req, res) {
   // CORS 头部
   res.setHeader('Access-Control-Allow-Origin', '*'); 
