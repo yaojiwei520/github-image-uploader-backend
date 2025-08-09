@@ -1,9 +1,9 @@
-// api/v1.js (Serverless API Endpoint for multipart/form-data)
-// 注意：此文件名为 'v1.js'，Vercel 将其映射到 /api/v1
+// api/v1.mjs (Serverless API Endpoint for multipart/form-data)
+// 注意：此文件名为 'v1.mjs'，Vercel 将其映射到 /api/v1
+// 这是一个 ES Module 文件，可以同时导入 ESM 和 CommonJS 模块
 
-// 所有依赖都使用 ES Module 语法导入
 import { Octokit } from '@octokit/rest'; 
-import formidable from 'formidable'; 
+import formidable from 'formidable'; // 这一行现在可以正常工作
 import fs from 'fs/promises'; 
 
 // 配置 formidable
@@ -159,7 +159,7 @@ export default async function handler(req, res) {
   }
 }
 
-// 导出配置，确保Vercel知道处理的是multipart/form-data
+// 注意：这里仍然需要导出 config，Vercel 会正确处理 .mjs 文件的 bodyParser 禁用
 export const config = {
     api: {
         bodyParser: false, 
