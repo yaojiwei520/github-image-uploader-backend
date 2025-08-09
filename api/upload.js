@@ -1,6 +1,7 @@
 // api/upload.js (部署到Vercel/Netlify/AWS Lambda等)
 
 module.exports = async (req, res) => {
+  // CORS 头部：允许来自您的前端域名或其他来源的请求
   res.setHeader('Access-Control-Allow-Origin', '*'); 
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With');
@@ -10,7 +11,8 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // 确保这里使用动态导入 Octokit 以解决 ERR_REQUIRE_ESM 错误
+    // 确保这里使用动态导入 Octokit 以解决 ERR_REQUIRE_ESM 错误。
+    // 这应该已经解决了您过去的那个 Octokit 报错。
     const { Octokit } = await import('@octokit/rest'); 
     // const { Octokit } = require('@octokit/rest'); // <-- 务必注释或删除这一行
 
@@ -37,30 +39,35 @@ module.exports = async (req, res) => {
     let ext = mimeType.split('/')[1] || 'png';
     if (ext === 'jpeg') ext = 'jpg';
 
-    // *** 核心修改：生成北京时间命名 ***
-    const now = new Date();
-    const timeOptions = { 
+    // *** 核心修改：使用 formatToParts() 精确获取北京时间各部分 ***
+    const now = new Date(); 
+    const formatter = new Intl.DateTimeFormat('en-US', {
         timeZone: 'Asia/Shanghai', // 指定北京时间
-        year: 'numeric', 
-        month: '2-digit', 
-        day: '2-digit', 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit', 
-        hour12: false // 24小时制
-    };
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit', // 这里是 'hour'
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false // 确保24小时制
+    });
 
-    // 使用 Intl.DateTimeFormat 获取格式化后的时间各部分
-    const year = new Intl.DateTimeFormat('en-US', { ...timeOptions, year: 'numeric' }).format(now);
-    const month = new Intl.DateTimeFormat('en-US', { ...timeOptions, month: '2-digit' }).format(now);
-    const day = new Intl.DateTimeFormat('en-US', { ...timeOptions, day: '2-digit' }).format(now);
-    const hours = new Intl.DateTimeFormat('en-US', { ...timeOptions, hour: '2-digit' }).format(now);
-    const minutes = new Intl.DateTimeFormat('en-US', { ...timeOptions, minute: '2-digit' }).format(now);
-    const seconds = new Intl.DateTimeFormat('en-US', { ...timeOptions, second: '2-digit' }).format(now);
+    const parts = formatter.formatToParts(now);
     
-    // 拼接成 YYYYMMDDHHmmss 格式，并加上一个短的随机后缀以防万一
-    const datetimeString = `${year}${month}${day}${hours}${minutes}${seconds}`;
-    const randomSuffix = Math.random().toString(36).substr(2, 4); // 更短的随机后缀
+    // 从 parts 数组中精确提取每个组件的值
+    // 确保每个部分都找到，以防止 undefined
+    const year = parts.find(p => p.type === 'year')?.value || 'YYYY';
+    const month = parts.find(p => p.type === 'month')?.value || 'MM';
+    const day = parts.find(p => p.type === 'day')?.value || 'DD';
+    const hour = parts.find(p => p.type === 'hour')?.value || 'HH';
+    const minute = parts.find(p => p.type === 'minute')?.value || 'mm';
+    const second = parts.find(p => p.type === 'second')?.value || 'ss';
+
+    // 拼接成 YYYYMMDDHHmmss 格式
+    const datetimeString = `${year}${month}${day}${hour}${minute}${second}`;
+    
+    // 加上一个短的随机后缀以防止极端情况下的文件名冲突
+    const randomSuffix = Math.random().toString(36).substr(2, 4); 
     const filename = `${datetimeString}_${randomSuffix}.${ext}`;
     
     const path = `images/${filename}`; // 仓库中的完整路径
@@ -85,10 +92,10 @@ module.exports = async (req, res) => {
     console.log(`[Backend Debug] GitHub Pages CDN URL: ${githubPagesCdnUrl}`);
     
     res.status(200).json({
-      blobUrl: githubBlobUrl,       // 返回 Blob URL
-      cdnUrl: githubPagesCdnUrl,    // 返回 CDN URL
+      blobUrl: githubBlobUrl,       
+      cdnUrl: githubPagesCdnUrl,    
       path: path,                   
-      sha: uploadResult.data.content.sha // 或者根据需要，如果您没有需要可以设为null
+      sha: uploadResult.data.content.sha 
     });
     
   } catch (error) {
